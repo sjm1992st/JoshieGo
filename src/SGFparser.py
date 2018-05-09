@@ -20,7 +20,7 @@ class SGFParser(object):
         self.cs = []
 
     def valid(self):
-        return (not self.ha) and (self.result is not None) and (self.bd >= 6 and self.wd >= 6)
+        return (self.result is not None)
 
     def parse_kgs(self):
         for line in self.f:
@@ -29,12 +29,12 @@ class SGFParser(object):
                 tokens = line.split(']')
                 for token in tokens:
                     if token[:2] == 'BR':
-                        self.bd = int(line[3])
+                        self.bd = int(token[3])
                     if token[:2] == 'WR':
-                        self.wd = int(line[3])
+                        self.wd = int(token[3])
                     if token[:2] == 'RE':
                         if '+' not in line or not line.split('+')[1].startswith('Time'):
-                            self.result = line[3]
+                            self.result = token[3]
                     if token[:2] == 'HA':
                         self.ha = True
             else:
@@ -86,13 +86,35 @@ class SGFParser(object):
 
             if i >= self.num_moves:
                 return
+    def add_kgs_data(self, x_list, y_list):
+        last = -1
+        for i, move in enumerate(self.moves[:-1]):
+            self.game.mk_move(*Board.letter2num(move))
 
+            board_mtx = self.game.boards[-1].board_mtx
+            label = {'current_move': Board.letter2num(move),
+                     'next_move': Board.letter2num(self.moves[i+1]),
+                     'next_to_play': self.game.next_to_play,
+                     'ko_state:': self.game.ko_state[-1]
+                     }
+            x_list.append(board_mtx)
+            y_list.append(label)
+            last = i
+
+            img = self.game.get_current_board_img()
+            print(board_mtx)
+            print(label)
+            cv2.imshow('img', img)
+            cv2.waitKey(2)
+
+            #if i >= self.num_moves:
+                #return
 if __name__ == '__main__':
 
     # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs4d-19-2008\\'
     # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs-19-2017-02-new\\'
     # dirs = glob.glob('F:\\database\\computer-go-dataset-master\\KGS\\*')
-    dirs = glob.glob('F:\\database\\computer-go-dataset-master\\aya_selfplay\\*')
+    dirs = glob.glob('F:\\database\\*')
 
     x_list = []
     y_list = []
@@ -106,8 +128,8 @@ if __name__ == '__main__':
         for name in names:
             with open(name, 'r') as f:
                 sgf = SGFParser(f)
-                sgf.parse_aya()
-                sgf.add_data(x_list, y_list)
+                sgf.parse_kgs()
+                sgf.add_kgs_data(x_list, y_list)
 
             if int(len(x_list) / 10000) > prev:
                 print(len(x_list), len(y_list))
