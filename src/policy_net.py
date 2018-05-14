@@ -233,8 +233,8 @@ class PolicyNet(object):
 
 
 if __name__ == '__main__':
-    train_dir = '/mnt/chenzhao/GoData/policy_kgs/'
+    train_dir = 'D:/JoshieGo/src/'
     # train_dir = '/mnt/chenzhao/GoData/'
     net = PolicyNet(train_dir, '')
-    net.train(1e-4, save_path='/mnt/chenzhao/GoCheck/policy/kgs/policy_kgs_liberty_feat1e-4_',
-              resume_path='/mnt/chenzhao/GoCheck/policy/kgs/policy_kgs_liberty_feat-2')
+    net.train(1e-4, save_path='policy_kgs_liberty_feat1e-4_',
+              resume_path='D:/JoshieGo/trained_models/policy')
