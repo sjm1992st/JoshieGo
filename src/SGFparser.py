@@ -2,8 +2,8 @@ import glob
 import cv2
 import pickle
 from game import Board, Game
-from multiprocessing import  Pool, Queue
-
+from multiprocessing import  Pool, Queue,Process
+import time
 
 class SGFParser(object):
 
@@ -112,49 +112,19 @@ class SGFParser(object):
         return x_list1,y_list1
             #if i >= self.num_moves:
             #return
-def go_data(name):
-    print(name)
-    data_list_x=[]
-    with open(name, 'r',errors="ignore") as f:
-        sgf = SGFParser(f)
-        sgf.parse_kgs()
-        x_list1,y_list1=sgf.add_kgs_data()
-    data_list_x.append(x_list1)
-    data_list_x.append(y_list1)
-    #print(x_list1)
-    #print(y_list1)
-    return data_list_x
-
-if __name__ == '__main__':
-
-    # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs4d-19-2008\\'
-    # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs-19-2017-02-new\\'
-    # dirs = glob.glob('F:\\database\\computer-go-dataset-master\\KGS\\*')
-
-    pool = Pool(processes=4)
-
-    dirs = glob.glob('F:\\database\\*')
-    q=Queue()
-    data_list_x=Queue()
-    data_list_y=Queue()
+def go_data(Mname,i):
     x_list = []
     y_list = []
     prev = 0
     cnt = 0
-    Name=[]
-    for directory in dirs:
-        names = glob.glob(directory + '\\*.sgf')
-        for name in names:
-            #print(name)
-        ##for i in range(4):
-            #print(directory)
-            list1=pool.apply_async(go_data, (name, ))
-            print('-------------')
-            #print(list1.get()[0])
-            #print(list1.get()[1])
-
-            x_list.append(list1.get()[0])
-            y_list.append(list1.get()[1])
+    for name in Mname:
+        print(name)
+        with open(name, 'r',errors="ignore") as f:
+            sgf = SGFParser(f)
+            sgf.parse_kgs()
+            x_list1,y_list1=sgf.add_kgs_data()
+            x_list.append(x_list1)
+            y_list.append(y_list1)
             cnt=cnt+1
             if int(len(x_list) / 10000) > prev:
                 print(len(x_list), len(y_list))
@@ -168,9 +138,30 @@ if __name__ == '__main__':
                 y_list = []
                 prev = 0
             print(cnt)
-            #print(multiprocessing.current_process().name,cnt)
-        if(q.qsize()>0):
-            pool.close()
-            pool.join()
+
     cnt += 1
-    pickle.dump((x_list, y_list), open('aya_value_ko_feat' + str(cnt).zfill(2) + '.pkl', 'wb'), protocol=2)
+    pickle.dump((x_list, y_list), open('aya_value_ko_feat' + str(i)+'_'+str(cnt).zfill(2) + '.pkl', 'wb'), protocol=2)
+
+if __name__ == '__main__':
+
+    # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs4d-19-2008\\'
+    # directory = 'F:\\database\\computer-go-dataset-master\\KGS\\kgs-19-2017-02-new\\'
+    # dirs = glob.glob('F:\\database\\computer-go-dataset-master\\KGS\\*')
+    time_start=time.time()
+    pross=7
+    dirs = glob.glob('F:\\database\\*')
+
+    Name=[]
+    for directory in dirs:
+        names = glob.glob(directory + '\\*.sgf')
+        Name=Name+names
+
+    len_=len(Name)
+    len_pross=int(len_/pross)
+    pool = Pool(processes = pross)
+    for i in range(pross):
+        pool.apply_async(go_data, (Name[i*len_pross:(i+1)*len_pross],i, ))
+    pool.close()
+    pool.join()
+    time_end=time.time()
+    print('totally cost',time_end-time_start)
